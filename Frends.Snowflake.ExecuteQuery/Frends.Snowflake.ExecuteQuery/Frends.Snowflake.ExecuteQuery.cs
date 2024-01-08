@@ -18,7 +18,7 @@ public class Snowflake
     /// </summary>
     /// <param name="input">Connection and command parameters.</param>
     /// <param name="options">Options for controlling the behavior of a Task.</param>
-    /// <returns>Object { bool Success, dynamic Data, dynamic ErrorMessage }</returns>
+    /// <returns>Object { bool Success, int RecordsAffected, dynamic ErrorMessage, dynamic Data }</returns>
     public static Result ExecuteQuery([PropertyTab] Input input, [PropertyTab] Options options)
     {
         if (string.IsNullOrWhiteSpace(input.ConnectionString))
