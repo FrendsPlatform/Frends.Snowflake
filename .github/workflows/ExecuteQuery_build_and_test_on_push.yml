@@ -13,16 +13,12 @@ jobs:
     uses: FrendsPlatform/FrendsTasks/.github/workflows/build_test.yml@main
     with:
       workdir: Frends.Snowflake.ExecuteQuery
-      prebuild_command: |
-        echo "Restoring Snowflake private key..."
-        echo $env:SNOWFLAKE_PRIVATE_KEY_B64 | base64 -d > ${{ github.workspace }}/rsa_key.p8
-        echo "Private key restored at rsa_key.p8"
       env_var_name_1: Snowflake_ConnectionString
-      env_var_name_2: Snowflake_PrivateKeyFilePath
+      env_var_name_2: Snowflake_PrivateKeyB64
       env_var_name_3: Snowflake_PrivateKeyPassphrase
     secrets:
       badge_service_api_key: ${{ secrets.BADGE_SERVICE_API_KEY }}
       test_feed_api_key: ${{ secrets.TASKS_TEST_FEED_API_KEY }}
       env_var_value_1: ${{ secrets.SNOWFLAKE_CONNECTIONSTRING }}
-      env_var_value_2: ${{ github.workspace }}/rsa_key.p8
+      env_var_value_2: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_B64 }}
       env_var_value_3: ${{ secrets.SNOWFLAKE_PRIVATEKEYPASSPHRASE }}

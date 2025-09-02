@@ -4,23 +4,53 @@ using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 
 namespace Frends.Snowflake.ExecuteQuery.Tests;
+
+
+// Running tests locally:
+//   1. Set environment variables:
+//        - Snowflake_ConnectionString
+//        - Snowflake_PrivateKeyFilePath (path to your rsa_key.p8)
+//        - Snowflake_PrivateKeyPassphrase (if key is encrypted)
+//   2. Run tests as usual (`dotnet test`).
+//
+// Running tests in GitHub Actions:
+//   - Tests will use the SNOWFLAKE_PRIVATE_KEY_B64 secret.
+//   - The key is decoded in InitPrivateKeyFile() and written to a temp file.
+//   - No local file path is needed in the workflow.
 
 [TestClass]
 public class UnitTests
 {
 
     private static readonly string? _connectionString = Environment.GetEnvironmentVariable("Snowflake_ConnectionString");
-    private static readonly string? _privateKeyFilePath = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyFilePath");
+    private static readonly string? _privateKeyFilePath = InitPrivateKeyFile();
     private static readonly string? _privateKeyPassphrase = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyPassphrase");
-
+    private static string? _tempPrivateKeyFile;
     private static Input _input = new();
     private static Options _options = new();
     private static readonly List<string> _names = new() { "John", "Jane", "Tom", "Alice", "Bob", "Charlie", "David", "Eve", "Mallory", "Oscar" };
     private static readonly Random _random = new();
     private static readonly int _age = _random.Next(1, 101);
 
+    private static string? InitPrivateKeyFile()
+    {
+        var privateKeyB64 = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyB64");
+        if (string.IsNullOrWhiteSpace(privateKeyB64))
+            return null;
+
+        byte[] privateKeyBytes = Convert.FromBase64String(privateKeyB64);
+
+        string tempFile = Path.GetTempFileName();
+        string finalFile = Path.ChangeExtension(tempFile, ".p8");
+        File.Move(tempFile, finalFile);
+        File.WriteAllBytes(finalFile, privateKeyBytes);
+
+        _tempPrivateKeyFile = finalFile;
+        return finalFile;
+    }
 
     [TestInitialize]
     public void Setup()
