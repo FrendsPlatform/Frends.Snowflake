@@ -404,6 +404,6 @@ public class UnitTests
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("password may be incorrect") );
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("password may be incorrect"));
     }
 }

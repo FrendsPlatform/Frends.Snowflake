@@ -15,7 +15,7 @@ jobs:
       workdir: Frends.Snowflake.ExecuteQuery
       prebuild_command: |
         echo "Restoring Snowflake private key..."
-        echo $env:SNOWFLAKE_PRIVATE_KEY_B64 | base64 -d > rsa_key.p8
+        echo $env:SNOWFLAKE_PRIVATE_KEY_B64 | base64 -d > ${{ github.workspace }}/rsa_key.p8
         echo "Private key restored at rsa_key.p8"
       env_var_name_1: Snowflake_ConnectionString
       env_var_name_2: Snowflake_PrivateKeyFilePath
@@ -23,5 +23,5 @@ jobs:
     secrets:
       badge_service_api_key: ${{ secrets.BADGE_SERVICE_API_KEY }}
       env_var_value_1: ${{ secrets.SNOWFLAKE_CONNECTIONSTRING }}
-      env_var_value_2: rsa_key.p8
+      env_var_value_2: ${{ github.workspace }}/rsa_key.p8
       env_var_value_3: ${{ secrets.SNOWFLAKE_PRIVATEKEYPASSPHRASE }}
