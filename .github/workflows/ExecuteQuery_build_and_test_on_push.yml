@@ -15,7 +15,7 @@ jobs:
       workdir: Frends.Snowflake.ExecuteQuery
       prebuild_command: |
         echo "Restoring Snowflake private key..."
-        echo "$SNOWFLAKE_PRIVATE_KEY_B64" | base64 -d > rsa_key.p8
+        echo $env:SNOWFLAKE_PRIVATE_KEY_B64 | base64 -d > rsa_key.p8
         echo "Private key restored at rsa_key.p8"
       env_var_name_1: Snowflake_ConnectionString
       env_var_name_2: Snowflake_PrivateKeyFilePath
