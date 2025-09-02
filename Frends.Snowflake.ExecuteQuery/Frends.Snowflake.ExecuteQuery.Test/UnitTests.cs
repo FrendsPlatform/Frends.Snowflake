@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace Frends.Snowflake.ExecuteQuery.Tests;
 
@@ -11,6 +12,9 @@ public class UnitTests
 {
 
     private static readonly string? _connectionString = Environment.GetEnvironmentVariable("Snowflake_ConnectionString");
+    private static readonly string? _privateKeyFilePath = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyFilePath");
+    private static readonly string? _privateKeyPassphrase = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyPassphrase");
+
     private static Input _input = new();
     private static Options _options = new();
     private static readonly List<string> _names = new() { "John", "Jane", "Tom", "Alice", "Bob", "Charlie", "David", "Eve", "Mallory", "Oscar" };
@@ -23,6 +27,8 @@ public class UnitTests
     {
         _input = new Input()
         {
+            PrivateKeyFilePath = _privateKeyFilePath,
+            PrivateKeyPassphrase = _privateKeyPassphrase,
             ConnectionString = _connectionString,
             CommandText = null,
             CommandType = CommandTypes.ExecuteNonQuery,
@@ -359,6 +365,45 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(_input, _options);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Error: Connection string is invalid: Format of the initialization string does not conform"));
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("not provided"));
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_ValidCredentials_ShouldReturnUser()
+    {
+        _input.CommandText = "SELECT CURRENT_USER;";
+        _input.CommandType = CommandTypes.ExecuteScalar;
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsTrue(result.Success);
+        Assert.IsNotNull(result.Data);
+        Assert.AreEqual("FRENDSFSP", result.Data.Value.ToString().ToUpper());
+        Assert.IsNull(result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_InvalidKeyFile_ShouldFail()
+    {
+        _input.PrivateKeyFilePath = "non_existing_key_file.p8";
+        _options.ThrowExceptionOnError = false;
+
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Data);
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("Private key file not found"));
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_InvalidPassphrase_ShouldFail()
+    {
+        _input.PrivateKeyPassphrase = "WrongPassphrase";
+        _options.ThrowExceptionOnError = false;
+
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Data);
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("password may be incorrect") );
     }
 }
