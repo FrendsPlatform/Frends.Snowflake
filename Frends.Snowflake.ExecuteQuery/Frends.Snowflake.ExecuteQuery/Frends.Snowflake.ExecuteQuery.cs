@@ -155,20 +155,6 @@ public class Snowflake
         return table;
     }
 
-    private static bool LooksLikeJson(string s)
-    {
-        // Cheap pre-check to avoid exceptions for normal strings
-        s = s.Trim();
-        return (s.Length > 1 && (s[0] == '{' && s[^1] == '}')) ||
-               (s.Length > 1 && (s[0] == '[' && s[^1] == ']'));
-    }
-
-    private static bool TryParseJson(string s, out JToken? token)
-    {
-        try { token = JToken.Parse(s); return true; }
-        catch { token = null; return false; }
-    }
-
     private static JToken FloatToJsonToken(double d)
     {
         if (double.IsNaN(d) || double.IsInfinity(d))
