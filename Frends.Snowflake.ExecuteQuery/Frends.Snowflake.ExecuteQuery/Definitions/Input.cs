@@ -9,10 +9,14 @@ namespace Frends.Snowflake.ExecuteQuery.Definitions;
 public class Input
 {
     /// <summary>
-    /// String that contains the necessary data to connect to the database. 
+    /// Snowflake connection string. Use `PrivateKeyFilePath` + `PrivateKeyPassphrase` for encrypted keys.
+    /// Required: account, user, db, schema, authenticator=SNOWFLAKE_JWT. 
+    /// For unencrypted keys, `private_key` can be included directly.
     /// </summary>
-    /// <example>account=myaccount;user=myuser;password=mypassword;warehouse=mywarehouse;role=myrole;db=mydb;schema=myschema</example>
-    [DisplayFormat(DataFormatString = "Text")]
+    /// <example>
+    /// account=testaccount-123;user=user;role=ACCOUNTADMIN;db=SHOP;schema=PUBLIC;
+    /// authenticator=SNOWFLAKE_JWT;private_key=-----BEGIN PRIVATE KEY-----MIIB...END PRIVATE KEY-----
+    /// </example>
     [PasswordPropertyText]
     public string ConnectionString { get; set; }
 
