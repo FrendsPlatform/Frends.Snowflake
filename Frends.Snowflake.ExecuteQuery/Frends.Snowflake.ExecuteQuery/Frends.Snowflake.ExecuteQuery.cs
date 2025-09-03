@@ -28,15 +28,15 @@ public class Snowflake
         if (string.IsNullOrWhiteSpace(input.ConnectionString))
             throw new Exception("Invalid connection string.");
 
-        IDbConnection conn = new SnowflakeDbConnection();
         try
         {
+            using IDbConnection conn = new SnowflakeDbConnection();
             var csb = new DbConnectionStringBuilder { ConnectionString = input.ConnectionString };
 
             if (!string.IsNullOrWhiteSpace(input.PrivateKeyFilePath))
             {
                 var csLower = csb.ConnectionString.ToLowerInvariant();
-                if (csLower.Contains("private_key=") || csLower.Contains("private_key_file="))
+                if (csb.ContainsKey("private_key") || csb.ContainsKey("private_key_file"))
                     throw new Exception("ConnectionString already contains a private key. Use either ConnectionString OR PrivateKeyFilePath, not both.");
                 if (!File.Exists(input.PrivateKeyFilePath))
                     throw new FileNotFoundException($"Private key file not found: {input.PrivateKeyFilePath}");
@@ -78,12 +78,6 @@ public class Snowflake
             if (options.ThrowExceptionOnError)
                 throw;
             return new Result(false, 0, ex, null);
-        }
-        finally
-        {
-            if (conn.State != ConnectionState.Closed)
-                conn.Close();
-            conn.Dispose();
         }
     }
 }

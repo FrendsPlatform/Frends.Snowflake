@@ -10,6 +10,7 @@ public class Input
 {
     /// <summary>
     /// String that contains the necessary data to connect to the database.
+    /// </summary>
     /// <example>
     /// account=testaccount-123;user=user;role=ACCOUNTADMIN;db=SHOP;schema=PUBLIC;
     /// authenticator=SNOWFLAKE_JWT;private_key_file=C:/snow/rsa_key.p8;private_key_pwd=MyStrongPassphrase
