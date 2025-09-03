@@ -3,26 +3,62 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 
 namespace Frends.Snowflake.ExecuteQuery.Tests;
+
+
+// Running tests locally:
+//   1. Set environment variables:
+//        - Snowflake_ConnectionString
+//        - Snowflake_PrivateKeyFilePath (path to your rsa_key.p8)
+//        - Snowflake_PrivateKeyPassphrase (if key is encrypted)
+//   2. Run tests as usual (`dotnet test`).
+//
+// Running tests in GitHub Actions:
+//   - Tests will use the SNOWFLAKE_PRIVATE_KEY_B64 secret.
+//   - The key is decoded in InitPrivateKeyFile() and written to a temp file.
+//   - No local file path is needed in the workflow.
 
 [TestClass]
 public class UnitTests
 {
 
     private static readonly string? _connectionString = Environment.GetEnvironmentVariable("Snowflake_ConnectionString");
+    private static readonly string? _privateKeyFilePath = InitPrivateKeyFile();
+    private static readonly string? _privateKeyPassphrase = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyPassphrase");
+    private static string? _tempPrivateKeyFile;
     private static Input _input = new();
     private static Options _options = new();
     private static readonly List<string> _names = new() { "John", "Jane", "Tom", "Alice", "Bob", "Charlie", "David", "Eve", "Mallory", "Oscar" };
     private static readonly Random _random = new();
     private static readonly int _age = _random.Next(1, 101);
 
+    private static string? InitPrivateKeyFile()
+    {
+        var privateKeyB64 = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyB64");
+        if (string.IsNullOrWhiteSpace(privateKeyB64))
+            return null;
+
+        byte[] privateKeyBytes = Convert.FromBase64String(privateKeyB64);
+
+        string tempFile = Path.GetTempFileName();
+        string finalFile = Path.ChangeExtension(tempFile, ".p8");
+        File.Move(tempFile, finalFile);
+        File.WriteAllBytes(finalFile, privateKeyBytes);
+
+        _tempPrivateKeyFile = finalFile;
+        return finalFile;
+    }
 
     [TestInitialize]
     public void Setup()
     {
         _input = new Input()
         {
+            PrivateKeyFilePath = _privateKeyFilePath,
+            PrivateKeyPassphrase = _privateKeyPassphrase,
             ConnectionString = _connectionString,
             CommandText = null,
             CommandType = CommandTypes.ExecuteNonQuery,
@@ -348,7 +384,7 @@ public class UnitTests
     public void ExecuteTest_InvalidConnectionString_Foo_ThrowExceptionOnError_True()
     {
         _input.ConnectionString = "foo";
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<ArgumentException>(() => Snowflake.ExecuteQuery(_input, _options));
     }
 
     [TestMethod]
@@ -359,6 +395,45 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(_input, _options);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Error: Connection string is invalid: Format of the initialization string does not conform"));
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("Format of the initialization string does not conform to specification"));
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_ValidCredentials_ShouldReturnUser()
+    {
+        _input.CommandText = "SELECT CURRENT_USER;";
+        _input.CommandType = CommandTypes.ExecuteScalar;
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsTrue(result.Success);
+        Assert.IsNotNull(result.Data);
+        Assert.AreEqual("FRENDSFSP", result.Data.Value.ToString().ToUpper());
+        Assert.IsNull(result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_InvalidKeyFile_ShouldFail()
+    {
+        _input.PrivateKeyFilePath = "non_existing_key_file.p8";
+        _options.ThrowExceptionOnError = false;
+
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Data);
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("Private key file not found"));
+    }
+
+    [TestMethod]
+    public void ExecuteTest_KeyPairAuth_InvalidPassphrase_ShouldFail()
+    {
+        _input.PrivateKeyPassphrase = "WrongPassphrase";
+        _options.ThrowExceptionOnError = false;
+
+        var result = Snowflake.ExecuteQuery(_input, _options);
+
+        Assert.IsFalse(result.Success);
+        Assert.IsNull(result.Data);
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("problem creating ENCRYPTED private key"));
     }
 }
