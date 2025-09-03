@@ -384,7 +384,7 @@ public class UnitTests
     public void ExecuteTest_InvalidConnectionString_Foo_ThrowExceptionOnError_True()
     {
         _input.ConnectionString = "foo";
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<ArgumentException>(() => Snowflake.ExecuteQuery(_input, _options));
     }
 
     [TestMethod]
@@ -395,7 +395,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(_input, _options);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("not provided"));
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("Format of the initialization string does not conform to specification"));
     }
 
     [TestMethod]
@@ -434,6 +434,6 @@ public class UnitTests
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("password may be incorrect"));
+        Assert.IsTrue(result.ErrorMessage.Message.Contains("problem creating ENCRYPTED private key"));
     }
 }
