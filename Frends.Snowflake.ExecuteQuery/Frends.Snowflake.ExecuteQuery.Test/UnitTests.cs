@@ -3,8 +3,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
+using System.Threading;
+using Newtonsoft.Json.Linq;
 
 namespace Frends.Snowflake.ExecuteQuery.Tests;
 
@@ -76,7 +77,7 @@ public class UnitTests
     {
         _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 10);";
         _input.CommandType = CommandTypes.ExecuteReader;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.RecordsAffected);
         Assert.IsNull(result.ErrorMessage);
@@ -87,7 +88,7 @@ public class UnitTests
     {
         _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 20);";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsNull(result.ErrorMessage);
@@ -98,7 +99,7 @@ public class UnitTests
     {
         _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 30);";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
         Assert.IsNull(result.ErrorMessage);
@@ -109,7 +110,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -118,7 +119,7 @@ public class UnitTests
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteReader;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
@@ -129,7 +130,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -138,7 +139,7 @@ public class UnitTests
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
@@ -149,7 +150,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -158,7 +159,7 @@ public class UnitTests
         _input.CommandText = "insert into NoTable values ('A', 1);";
         _input.CommandType = CommandTypes.ExecuteScalar;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
@@ -169,7 +170,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -178,7 +179,7 @@ public class UnitTests
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteReader;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
@@ -189,7 +190,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -198,7 +199,7 @@ public class UnitTests
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
@@ -209,7 +210,7 @@ public class UnitTests
     {
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -218,7 +219,7 @@ public class UnitTests
         _input.CommandText = "insert into TaskTestTable values (1, 'A');";
         _input.CommandType = CommandTypes.ExecuteScalar;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
@@ -229,11 +230,19 @@ public class UnitTests
     {
         _input.CommandText = "Select * from TaskTestTable;";
         _input.CommandType = CommandTypes.ExecuteReader;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
-        Assert.IsTrue(result.Data.Rows.Count > 0);
+        Assert.IsTrue(result.Data.Count > 0);
         Assert.IsNull(result.ErrorMessage);
         Assert.AreEqual(-1, result.RecordsAffected);
+
+        // Check props
+        var jObject = (JObject)result.Data[0];
+        Assert.IsTrue(jObject.ContainsKey("NAME"));
+        Assert.IsTrue(jObject.ContainsKey("AGE"));
+        Assert.AreEqual(2, jObject.Count);
+        Assert.IsTrue(!string.IsNullOrWhiteSpace((string)jObject["NAME"]!));
+        Assert.IsTrue((int)jObject["AGE"]! > 0);
     }
 
     [TestMethod]
@@ -241,7 +250,7 @@ public class UnitTests
     {
         _input.CommandText = "Select * from TaskTestTable;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsNull(result.ErrorMessage);
@@ -253,7 +262,7 @@ public class UnitTests
     {
         _input.CommandText = "Select * from TaskTestTable;";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(_names.Contains(result.Data.Value.ToString()));
         Assert.IsNull(result.ErrorMessage);
@@ -265,7 +274,7 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -274,7 +283,7 @@ public class UnitTests
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteReader;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
@@ -285,7 +294,7 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -294,7 +303,7 @@ public class UnitTests
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
@@ -305,7 +314,7 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -314,7 +323,7 @@ public class UnitTests
         _input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         _input.CommandType = CommandTypes.ExecuteScalar;
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
@@ -325,14 +334,14 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 21 where age = 20;";
         _input.CommandType = CommandTypes.ExecuteReader;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.RecordsAffected > 0);
 
         // restore
         _input.CommandText = "update TaskTestTable set age = 20 where age = 21;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Snowflake.ExecuteQuery(_input, _options);
+        Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
     }
 
     [TestMethod]
@@ -340,14 +349,14 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 31 where age = 30;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.RecordsAffected > 0);
 
         // restore
         _input.CommandText = "update TaskTestTable set age = 30 where age = 31;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Snowflake.ExecuteQuery(_input, _options);
+        Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
     }
 
     [TestMethod]
@@ -355,7 +364,7 @@ public class UnitTests
     {
         _input.CommandText = "update TaskTestTable set age = 11 where age = 10;";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.Data.Value > 0);
         Assert.IsTrue(result.RecordsAffected > 0);
@@ -363,28 +372,28 @@ public class UnitTests
         // restore
         _input.CommandText = "update TaskTestTable set age = 10 where age = 11;";
         _input.CommandType = CommandTypes.ExecuteNonQuery;
-        Snowflake.ExecuteQuery(_input, _options);
+        Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
     }
 
     [TestMethod]
     public void ExecuteTest_InvalidConnectionString_IsNULL()
     {
         _input.ConnectionString = null;
-        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
     public void ExecuteTest_InvalidConnectionString_Empty()
     {
         _input.ConnectionString = "";
-        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
     public void ExecuteTest_InvalidConnectionString_Foo_ThrowExceptionOnError_True()
     {
         _input.ConnectionString = "foo";
-        Assert.ThrowsException<ArgumentException>(() => Snowflake.ExecuteQuery(_input, _options));
+        Assert.ThrowsException<ArgumentException>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -392,7 +401,7 @@ public class UnitTests
     {
         _input.ConnectionString = "foo";
         _options.ThrowExceptionOnError = false;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
         Assert.IsTrue(result.ErrorMessage.Message.Contains("Format of the initialization string does not conform to specification"));
@@ -403,7 +412,7 @@ public class UnitTests
     {
         _input.CommandText = "SELECT CURRENT_USER;";
         _input.CommandType = CommandTypes.ExecuteScalar;
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
 
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
@@ -417,7 +426,7 @@ public class UnitTests
         _input.PrivateKeyFilePath = "non_existing_key_file.p8";
         _options.ThrowExceptionOnError = false;
 
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
@@ -430,7 +439,7 @@ public class UnitTests
         _input.PrivateKeyPassphrase = "WrongPassphrase";
         _options.ThrowExceptionOnError = false;
 
-        var result = Snowflake.ExecuteQuery(_input, _options);
+        var result = Snowflake.ExecuteQuery(_input, _options, CancellationToken.None);
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);

@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.0] - 2025-09-03
+### Changed
+- [Breaking] Result now returns a dynamic JToken instead of DataTable when using ExecuteReader mode.
+- Added support for CancellationToken, thus enabling query cancellation.
+
 ## [1.2.0] - 2025-09-03
 ### Added
   - Added support for Snowflake key pair authentication:
