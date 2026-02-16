@@ -1,6 +1,6 @@
 # Frends.Snowflake.BatchOperation
 
-Task to run batch operation in Snowflake
+Task to run a batch operation in Snowflake
 
 [![BatchOperation_build](https://github.com/FrendsPlatform/Frends.Snowflake/actions/workflows/BatchOperation_test_on_main.yml/badge.svg)](https://github.com/FrendsPlatform/Frends.Snowflake/actions/workflows/BatchOperation_test_on_main.yml)
 ![Coverage](https://app-github-custom-badges.azurewebsites.net/Badge?key=FrendsPlatform/Frends.Snowflake/Frends.Snowflake.BatchOperation|main)
@@ -22,6 +22,11 @@ You can install the Task via Frends UI Task View.
 
 ### Run tests
 
+To run tests, you need to have configured Snowflake user, that have service type and will use Key Pairs to validate.
+If the user is not configured, you need to generate a new key pair.
+Public one should be added to a database user info
+Private one should be provided as 64 encoded string through environment variable.
+
 Run the tests
 
 `dotnet test`
@@ -31,4 +36,6 @@ Run the tests
 `dotnet pack --configuration Release`
 
 ### StyleCop.Analyzers Version
-This project uses StyleCop.Analyzers 1.2.0-beta.556, as recommended by the author, to get the latest fixes and improvements not available in the last stable release.
+
+This project uses StyleCop.Analyzers 1.2.0-beta.556, as recommended by the author, to get the latest fixes and
+improvements not available in the last stable release.

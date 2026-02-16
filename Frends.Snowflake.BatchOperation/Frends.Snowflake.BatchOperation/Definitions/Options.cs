@@ -9,14 +9,6 @@ namespace Frends.Snowflake.BatchOperation.Definitions;
 public class Options
 {
     /// <summary>
-    /// Delimiter to use between the repeated strings.
-    /// </summary>
-    /// <example>,</example>
-    [DisplayFormat(DataFormatString = "Text")]
-    [DefaultValue(" ")]
-    public TransactionIsolationLevel IsolationLevel { get; set; }
-
-    /// <summary>
     /// Whether to throw an error on failure.
     /// </summary>
     /// <example>true</example>

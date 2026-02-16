@@ -12,10 +12,10 @@ public class Result
     public bool Success { get; set; }
 
     /// <summary>
-    /// Input string repeated the specified number of times.
+    /// Number of affected rows.
     /// </summary>
-    /// <example>foobar,foobar</example>
-    public string Output { get; set; }
+    /// <example>2</example>
+    public int AffectedRows { get; set; }
 
     /// <summary>
     /// Error that occurred during task execution.

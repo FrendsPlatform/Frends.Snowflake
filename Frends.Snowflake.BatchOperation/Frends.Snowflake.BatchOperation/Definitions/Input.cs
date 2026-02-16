@@ -11,15 +11,26 @@ public class Input
     /// <summary>
     /// Query to perform.
     /// </summary>
-    /// <example>foobar</example>
+    /// <example>INSERT INTO TableName (NAME, AGE) VALUES (:Name, :Age)</example>
     [DisplayFormat(DataFormatString = "Text")]
-    [DefaultValue("Lorem ipsum dolor sit amet.")]
+    [DefaultValue("")]
     public string Query { get; set; }
 
     /// <summary>
-    /// Json data in specific format
+    /// Json data in a specific format
     /// </summary>
-    /// <example>2</example>
-    [DefaultValue(3)]
+    /// <example>
+    /// [
+    ///     {
+    ///         "Name": "Matti",
+    ///         "Age": 12
+    ///     },
+    ///     {
+    ///         "Name": "Joni",
+    ///         "Age": 34
+    ///     }
+    /// ]
+    /// </example>
+    [DefaultValue("")]
     public string JsonData { get; set; }
 }

@@ -9,38 +9,182 @@ namespace Frends.Snowflake.BatchOperation.Tests;
 public class FunctionalTests : TestBase
 {
     [Test]
-    public async Task ShouldRepeatContentWithDelimiter()
+    public async Task ShouldInsertSimpleData()
     {
         var input = new Input
         {
-            Query = "INSERT INTO TABLE (Col1, Col2) DB VALUES ()",
+            Query = "INSERT INTO TaskTestTable (NAME, AGE) VALUES (:NAME, :AGE)",
             JsonData = """
                        [
                          {
-                           "ParameterName1": "Value1",
-                           "ParameterName2": 123
+                           "NAME": "Mat",
+                           "AGE": 12
                          },
                          {
-                           "ParameterName1": "Value2",
-                           "ParameterName2": 456
+                           "NAME": "Mon",
+                           "AGE": 34
                          }
                        ]
                        """,
         };
 
-        var connection = new Connection
-        {
-            ConnectionString = ConnectionString,
-        };
-
-        var options = new Options
-        {
-            ThrowErrorOnFailure = true,
-            ErrorMessageOnFailure = null,
-        };
-
-        var result = await Snowflake.BatchOperation(input, connection, options, CancellationToken.None);
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
+        Assert.That(result.AffectedRows, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task ShouldInsertIncompleteData()
+    {
+        var input = new Input
+        {
+            Query = "INSERT INTO TaskTestTable (NAME, AGE) VALUES (:NAME, :AGE)",
+            JsonData = """
+                       [
+                            {
+                                "NAME": "Mat"
+                            },
+                            {
+                                "NAME": "Mon",
+                                "AGE": 34
+                            },
+                            {
+                                "NAME": "Jefim",
+                                "AGE": 11
+                            },
+                            {
+                                "NAME": "Michal"
+                            },
+                            {
+                                "NAME": "Jacek",
+                                "AGE": 22
+                            }
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.AffectedRows, Is.EqualTo(5));
+    }
+
+    [Test]
+    public async Task ShouldInsertIncompleteDataAtTheEnd()
+    {
+        var input = new Input
+        {
+            Query = "INSERT INTO TaskTestTable (NAME, AGE) VALUES (:NAME, :AGE)",
+            JsonData = """
+                       [
+                            {
+                                "NAME": "Mat"
+                            },
+                            {
+                                "NAME": "Mon",
+                                "AGE": 34
+                            },
+                            {
+                                "NAME": "Jefim",
+                                "AGE": 11
+                            },
+                            {
+                                "NAME": "Michal"
+                            },
+                            {
+                                "NAME": "Jacek"
+                            }
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.AffectedRows, Is.EqualTo(5));
+    }
+
+    [Test]
+    public async Task ShouldFailWithInvalidDataFormat()
+    {
+        var input = new Input
+        {
+            Query = "INSERT INTO TaskTestTable (NAME, AGE) VALUES (:NAME, :AGE)",
+            JsonData = """
+                       [
+                         {
+                           "NAME": "Mat",
+                           "AGE": 12
+                         },
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.AffectedRows, Is.EqualTo(0));
+        Assert.That(result.Error.Message, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task ShouldRollbackWithInvalidQuery()
+    {
+        var input = new Input
+        {
+            Query = "INVALID QUERY",
+            JsonData = """
+                       [
+                         {
+                           "NAME": "Mat",
+                           "AGE": 12
+                         },
+                         {
+                           "NAME": "Mon ",
+                           "AGE": 34
+                         }
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.AffectedRows, Is.EqualTo(0));
+        Assert.That(result.Error.Message, Contains.Substring("Transaction failed. Rolled back."), result.Error.Message);
+    }
+
+    [Test]
+    public async Task ShouldRollbackWithInvalidQueryParams()
+    {
+        var input = new Input
+        {
+            Query = "INSERT INTO TaskTestTable (NAME, AGE) VALUES (:col1, :col2)",
+            JsonData = """
+                       [
+                         {
+                           "NAME": "Mat",
+                           "AGE": 12
+                         },
+                         {
+                           "NAME": "Mon ",
+                           "AGE": 34
+                         }
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.AffectedRows, Is.EqualTo(0));
+        Assert.That(result.Error.Message, Contains.Substring("Transaction failed. Rolled back."), result.Error.Message);
     }
 }

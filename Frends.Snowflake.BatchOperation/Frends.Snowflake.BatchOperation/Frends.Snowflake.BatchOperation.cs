@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Frends.Snowflake.BatchOperation.Definitions;
@@ -18,7 +15,7 @@ namespace Frends.Snowflake.BatchOperation;
 public static class Snowflake
 {
     /// <summary>
-    /// Task to run batch operation in Snowflake
+    /// Task to run a batch operation in Snowflake
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends-Snowflake-BatchOperation)
     /// </summary>
     /// <param name="input">Essential parameters.</param>
@@ -34,109 +31,51 @@ public static class Snowflake
     {
         try
         {
-            // 1. Parse and validate JSON
-            using JsonDocument doc = JsonDocument.Parse(input.JsonData);
-            JsonElement root = doc.RootElement;
-
-            if (root.ValueKind != JsonValueKind.Array)
-                throw new ArgumentException("Input JSON must be an array of arrays.");
-
-            int rowCount = root.GetArrayLength();
-            if (rowCount == 0) throw new Exception("Data in json can't be empty");
-
-            var firstElement = root[0];
-            if (firstElement.ValueKind != JsonValueKind.Object)
-                throw new ArgumentException("Elements in array must be objects.");
-
-            List<string> columnNames = firstElement.EnumerateObject().Select(p => p.Name).ToList();
-            int colCount = columnNames.Count;
-
-            // // 2. Transpose data (Row-based to Column-based)
-            // var columns = new object[colCount][];
-            // for (int i = 0; i < colCount; i++) columns[i] = new object[rowCount];
-            //
-            // int rowIndex = 0;
-            // foreach (JsonElement row in root.EnumerateArray())
-            // {
-            //     if (row.GetArrayLength() != colCount)
-            //         throw new ArgumentException($"Row at index {rowIndex} has invalid column count.");
-            //
-            //     int colIndex = 0;
-            //     foreach (JsonElement cell in row.EnumerateArray())
-            //     {
-            //         columns[colIndex][rowIndex] = GetValue(cell);
-            //         colIndex++;
-            //     }
-            //
-            //     rowIndex++;
-            // }
-
-            // 3. Execute in Snowflake within Transaction
             await using var conn = new SnowflakeDbConnection();
-            conn.ConnectionString = connection.ConnectionString;
+            conn.ConnectionString = SnowflakeHandler.BuildConnectionString(connection);
             await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
+            await using var cmd = conn.CreateCommand();
 
-            // Start transaction with requested IsolationLevel
-            await using var transaction = await conn
-                .BeginTransactionAsync(options.IsolationLevel.ToIsolationLevel(), cancellationToken)
-                .ConfigureAwait(false);
+            var data = SnowflakeHandler.GetData(input.JsonData);
+
             try
             {
-                await using var cmd = conn.CreateCommand();
-                cmd.Transaction = transaction; // Assign transaction to command
+                cmd.CommandText = "BEGIN TRANSACTION";
+                await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
                 cmd.CommandText = input.Query;
 
-                for (int i = 0; i < colCount; i++)
+                foreach (var row in data)
                 {
                     var param = cmd.CreateParameter();
-                    param.ParameterName = $"{i + 1}";
-                    param.Value = "test";
-                    param.DbType = GetDbType("string");
+                    param.ParameterName = row.Key;
+                    param.Value = row.Value.ToArray();
+                    param.DbType = SnowflakeHandler.GetDbType(row.Value.First());
                     cmd.Parameters.Add(param);
                 }
 
-                // cmd.ArrayBindCount = rowCount;
+                var affectedRows = await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
+                cmd.CommandText = "COMMIT";
                 await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
-                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return new Result
+                {
+                    Success = true,
+                    AffectedRows = affectedRows,
+                };
             }
-            catch
+            catch (Exception e)
             {
-                await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                throw;
+                cmd.CommandText = "ROLLBACK";
+                await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+                throw new Exception("Transaction failed. Rolled back.", e);
             }
         }
         catch (Exception ex)
         {
             return ErrorHandler.Handle(ex, options.ThrowErrorOnFailure, options.ErrorMessageOnFailure);
         }
-
-        return new Result();
-    }
-
-    private static object GetValue(JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt64(out long l) ? l : element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Null => DBNull.Value,
-            _ => element.ToString(),
-        };
-    }
-
-    private static DbType GetDbType(object value)
-    {
-        return value switch
-        {
-            int or long => DbType.Int64,
-            double or float or decimal => DbType.Double,
-            bool => DbType.Boolean,
-            DateTime => DbType.DateTime,
-            _ => DbType.String,
-        };
     }
 }

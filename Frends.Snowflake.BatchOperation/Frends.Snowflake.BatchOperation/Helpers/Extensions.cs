@@ -1,19 +1,23 @@
-﻿using System;
-using System.Data;
-using Frends.Snowflake.BatchOperation.Definitions;
+using System.Collections.Generic;
 
 namespace Frends.Snowflake.BatchOperation.Helpers;
 
 internal static class Extensions
 {
-    internal static IsolationLevel ToIsolationLevel(
-        this TransactionIsolationLevel transactionIsolationLevel)
+    internal static void SafeInsert<T>(this List<T> list, int index, T value)
     {
-        return GetEnum<IsolationLevel>(transactionIsolationLevel);
-    }
+        while (list.Count < index)
+        {
+            list.Add(default);
+        }
 
-    private static T GetEnum<T>(Enum enumValue)
-    {
-        return (T)Enum.Parse(typeof(T), enumValue.ToString());
+        if (index == list.Count)
+        {
+            list.Add(value);
+        }
+        else
+        {
+            list.Insert(index, value);
+        }
     }
 }

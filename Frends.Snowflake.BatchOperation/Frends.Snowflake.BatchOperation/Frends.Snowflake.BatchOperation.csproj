@@ -10,7 +10,7 @@
         <PackageTags>Frends</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <Description>Task to run batch operation in Snowflake</Description>
+        <Description>Task to run a batch operation in Snowflake</Description>
         <PackageProjectUrl>https://frends.com/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FrendsPlatform/Frends.Snowflake/tree/main/Frends.Snowflake.BatchOperation</RepositoryUrl>
         <Nullable>disable</Nullable>
