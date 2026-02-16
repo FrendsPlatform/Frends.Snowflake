@@ -15,12 +15,15 @@ public abstract class TestBase
     {
         DotEnv.Load();
         ConnectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        PrivateKeyPassphrase = Environment.GetEnvironmentVariable("PRIVATE_KEY_PASSPHRASE");
         PrivateKeyFilePath = InitPrivateKeyFile();
     }
 
     private string ConnectionString { get; }
 
     private string PrivateKeyFilePath { get; }
+
+    private string PrivateKeyPassphrase { get; }
 
     protected static Options DefaultOptions() => new()
     {
@@ -34,6 +37,7 @@ public abstract class TestBase
     {
         ConnectionString = ConnectionString,
         PrivateKeyFilePath = PrivateKeyFilePath,
+        PrivateKeyPassphrase = PrivateKeyPassphrase,
     };
 
     [OneTimeSetUp]
@@ -44,6 +48,7 @@ public abstract class TestBase
             ConnectionString = ConnectionString,
         };
         connStringBuilder.Add("private_key_file", PrivateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", PrivateKeyPassphrase);
         await using var conn = new SnowflakeDbConnection();
         conn.ConnectionString = connStringBuilder.ConnectionString;
         await conn.OpenAsync().ConfigureAwait(false);
@@ -60,6 +65,7 @@ public abstract class TestBase
             ConnectionString = ConnectionString,
         };
         connStringBuilder.Add("private_key_file", PrivateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", PrivateKeyPassphrase);
         await using var conn = new SnowflakeDbConnection();
         conn.ConnectionString = connStringBuilder.ConnectionString;
         await conn.OpenAsync().ConfigureAwait(false);
