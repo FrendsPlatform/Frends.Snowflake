@@ -25,7 +25,8 @@ public class Snowflake
     /// <param name="input">Connection and command parameters.</param>
     /// <param name="options">Options for controlling the behavior of a Task.</param>
     /// <returns>Object { bool Success, int RecordsAffected, dynamic ErrorMessage, dynamic Data }</returns>
-    public static Result ExecuteQuery([PropertyTab] Input input, [PropertyTab] Options options, CancellationToken cancellationToken)
+    public static Result ExecuteQuery([PropertyTab] Input input, [PropertyTab] Options options,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(input.ConnectionString))
             throw new Exception("Invalid connection string.");
@@ -33,13 +34,18 @@ public class Snowflake
         try
         {
             using IDbConnection conn = new SnowflakeDbConnection();
-            var csb = new DbConnectionStringBuilder { ConnectionString = input.ConnectionString };
+            var csb = new DbConnectionStringBuilder
+            {
+                ConnectionString = input.ConnectionString
+            };
 
             if (!string.IsNullOrWhiteSpace(input.PrivateKeyFilePath))
             {
                 var csLower = csb.ConnectionString.ToLowerInvariant();
+
                 if (csb.ContainsKey("private_key") || csb.ContainsKey("private_key_file"))
-                    throw new Exception("ConnectionString already contains a private key. Use either ConnectionString OR PrivateKeyFilePath, not both.");
+                    throw new Exception(
+                        "ConnectionString already contains a private key. Use either ConnectionString OR PrivateKeyFilePath, not both.");
                 if (!File.Exists(input.PrivateKeyFilePath))
                     throw new FileNotFoundException($"Private key file not found: {input.PrivateKeyFilePath}");
 
@@ -53,10 +59,12 @@ public class Snowflake
             using IDbCommand cmd = conn.CreateCommand();
             cmd.CommandTimeout = options.TimeOut;
             cmd.CommandText = input.CommandText;
+
             switch (input.CommandType)
             {
                 case CommandTypes.ExecuteNonQuery:
                     var executeNQ = cmd.ExecuteNonQuery();
+
                     return new Result(true, executeNQ, null, null);
                 case CommandTypes.ExecuteReader:
                     var reader = cmd.ExecuteReader();
@@ -65,19 +73,27 @@ public class Snowflake
                     if (!reader.IsClosed)
                         reader.Close();
                     reader.Dispose();
+
                     return result;
                 case CommandTypes.ExecuteScalar:
                     var executeS = cmd.ExecuteScalar();
-                    return new Result(true, 1, null, JToken.FromObject(new { Value = executeS }));
+
+                    return new Result(true, 1, null, JToken.FromObject(new
+                    {
+                        Value = executeS
+                    }));
             }
+
             if (options.ThrowExceptionOnError)
                 throw new Exception("Invalid Command type.");
+
             return new Result(false, 0, "Invalid Command type", null);
         }
         catch (Exception ex)
         {
             if (options.ThrowExceptionOnError)
                 throw;
+
             return new Result(false, 0, ex, null);
         }
     }
@@ -106,6 +122,7 @@ public class Snowflake
                 object o = reader.GetValue(i);
 
                 JToken token;
+
                 if (o == DBNull.Value)
                 {
                     token = JValue.CreateNull();
@@ -115,31 +132,13 @@ public class Snowflake
                     // Snowflake BINARY -> base64 string is the most interoperable representation
                     token = new JValue(Convert.ToBase64String(bytes));
                 }
-                else if (o is float f)
+                else if (o is float or double)
                 {
-                    token = FloatToJsonToken(f);
+                    token = FloatToJsonToken(o);
                 }
-                else if (o is double d)
+                else if (o is decimal or DateTimeOffset or DateTime or string)
                 {
-                    token = FloatToJsonToken(d);
-                }
-                else if (o is decimal m)
-                {
-                    // decimals are safe
-                    token = new JValue(m);
-                }
-                else if (o is DateTimeOffset dto)
-                {
-                    // Keep offset — JSON.NET will emit ISO 8601 with offset
-                    token = new JValue(dto);
-                }
-                else if (o is DateTime dt)
-                {
-                    token = new JValue(dt);
-                }
-                else if (o is string s)
-                {
-                    token = new JValue(s);
+                    token = new JValue(o);
                 }
                 else
                 {
@@ -155,10 +154,11 @@ public class Snowflake
         return table;
     }
 
-    private static JToken FloatToJsonToken(double d)
+    private static JToken FloatToJsonToken(object d)
     {
-        if (double.IsNaN(d) || double.IsInfinity(d))
+        if (double.IsNaN((double)d) || double.IsInfinity((double)d))
             return JValue.CreateNull(); // or new JValue(d.ToString()) if you prefer strings
+
         return new JValue(d);
     }
 }

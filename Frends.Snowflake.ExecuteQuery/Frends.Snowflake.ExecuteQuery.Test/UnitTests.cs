@@ -109,6 +109,15 @@ public class UnitTests
     }
 
     [TestMethod]
+    public void InvalidCommandType_Fails()
+    {
+        _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 10);";
+        _input.CommandType = (CommandTypes)999;
+        var ex = Assert.Throws<Exception>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
+        Assert.IsTrue(ex.Message.Contains("Invalid Command type"));
+    }
+
+    [TestMethod]
     public void ExecuteTest_Insert_ExecuteReader_TableExists()
     {
         _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 10);";
