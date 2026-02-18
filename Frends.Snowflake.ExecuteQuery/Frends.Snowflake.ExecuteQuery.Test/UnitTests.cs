@@ -3,12 +3,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Snowflake.Data.Client;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Frends.Snowflake.ExecuteQuery.Tests;
-
 
 // Running tests locally:
 //   1. Set environment variables:
@@ -53,6 +54,41 @@ public class UnitTests
         return finalFile;
     }
 
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
+    {
+        var connStringBuilder = new DbConnectionStringBuilder
+        {
+            ConnectionString = _connectionString,
+        };
+        connStringBuilder.Add("private_key_file", _privateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", _privateKeyPassphrase);
+        await using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = connStringBuilder.ConnectionString;
+        await conn.OpenAsync().ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "CREATE TABLE IF NOT EXISTS TaskTestTable (name VARCHAR,age NUMBER);";
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+    }
+
+    [ClassCleanup]
+    public static async Task GlobalTeardown()
+    {
+        var connStringBuilder = new DbConnectionStringBuilder
+        {
+            ConnectionString = _connectionString,
+        };
+        connStringBuilder.Add("private_key_file", _privateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", _privateKeyPassphrase);
+        await using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = connStringBuilder.ConnectionString;
+        await conn.OpenAsync().ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DROP TABLE IF EXISTS TaskTestTable";
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        File.Delete(_privateKeyFilePath);
+    }
+
     [TestInitialize]
     public void Setup()
     {
@@ -70,6 +106,15 @@ public class UnitTests
             ThrowExceptionOnError = true,
             TimeOut = 30
         };
+    }
+
+    [TestMethod]
+    public void InvalidCommandType_Fails()
+    {
+        _input.CommandText = @$"insert into TaskTestTable values ('{_names[_random.Next(_names.Count)]}', 10);";
+        _input.CommandType = (CommandTypes)999;
+        var ex = Assert.Throws<Exception>(() => Snowflake.ExecuteQuery(_input, _options, CancellationToken.None));
+        Assert.IsTrue(ex.Message.Contains("Invalid Command type"));
     }
 
     [TestMethod]
