@@ -57,6 +57,23 @@ public abstract class TestBase
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 
+    [SetUp]
+    protected async Task SetupEach()
+    {
+        var connStringBuilder = new DbConnectionStringBuilder
+        {
+            ConnectionString = ConnectionString,
+        };
+        connStringBuilder.Add("private_key_file", PrivateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", PrivateKeyPassphrase);
+        await using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = connStringBuilder.ConnectionString;
+        await conn.OpenAsync().ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "TRUNCATE TABLE TaskTestTable";
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+    }
+
     [OneTimeTearDown]
     protected async Task Teardown()
     {
