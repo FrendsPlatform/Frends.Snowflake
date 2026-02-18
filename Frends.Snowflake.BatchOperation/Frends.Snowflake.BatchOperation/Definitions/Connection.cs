@@ -11,7 +11,7 @@ public class Connection
     /// <summary>
     /// Connection string to Snowflake.
     /// </summary>
-    /// <example>Host=127.0.0.1;Port=5432</example>
+    /// <example>account=myaccount;host=myaccount.snowflakecomputing.com;user=myuser;db=mydb;schema=public</example>
     [DisplayFormat(DataFormatString = "Text")]
     [DefaultValue("")]
     public string ConnectionString { get; set; } = string.Empty;

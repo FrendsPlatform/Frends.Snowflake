@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +24,12 @@ public class ConnectionTests : TestBase
     public async Task ShouldFailWithInvalidUser()
     {
         var conn = DefaultConnection();
-        conn.ConnectionString = conn.ConnectionString.Replace("user=frendsfsp", "user=invalidUser");
+        var csb = new DbConnectionStringBuilder
+        {
+            ConnectionString = conn.ConnectionString,
+        };
+        csb["user"] = "invalidUser";
+        conn.ConnectionString = csb.ConnectionString;
 
         var result = await Snowflake.BatchOperation(DefaultInput(), conn, DefaultOptions(), CancellationToken.None);
         Assert.That(result.Success, Is.False);
@@ -37,11 +43,17 @@ public class ConnectionTests : TestBase
         var conn = DefaultConnection();
         var invalidKeyPath = Path.GetTempFileName();
         conn.PrivateKeyFilePath = invalidKeyPath;
-        var result = await Snowflake.BatchOperation(DefaultInput(), conn, DefaultOptions(), CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Error.Message, Contains.Substring("Unable to connect"));
-        Assert.That(result.AffectedRows, Is.EqualTo(0));
 
-        File.Delete(invalidKeyPath);
+        try
+        {
+            var result = await Snowflake.BatchOperation(DefaultInput(), conn, DefaultOptions(), CancellationToken.None);
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Error.Message, Contains.Substring("Unable to connect"));
+            Assert.That(result.AffectedRows, Is.EqualTo(0));
+        }
+        finally
+        {
+            File.Delete(invalidKeyPath);
+        }
     }
 }

@@ -22,10 +22,10 @@ You can install the Task via Frends UI Task View.
 
 ### Run tests
 
-To run tests, you need to have configured Snowflake user, that have service type and will use Key Pairs to validate.
+To run tests, you need to have a configured Snowflake user that has a service type and will use Key Pairs to validate.
 If the user is not configured, you need to generate a new key pair.
-Public one should be added to a database user info
-Private one should be provided as 64 encoded string through environment variable.
+Public one should be added to database user info
+Private one should be provided as a base64-encoded string through environment variable.
 
 Run the tests
 
@@ -39,3 +39,7 @@ Run the tests
 
 This project uses StyleCop.Analyzers 1.2.0-beta.556, as recommended by the author, to get the latest fixes and
 improvements not available in the last stable release.
+
+### Third-party licenses
+
+This project uses Snowflake.Data package under [the Apache 2.0 license](./Apache-2.0).

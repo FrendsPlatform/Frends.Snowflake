@@ -53,7 +53,7 @@ public abstract class TestBase
         conn.ConnectionString = connStringBuilder.ConnectionString;
         await conn.OpenAsync().ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "CREATE TABLE IF NOT EXISTS TaskTestTable (name VARCHAR,age NUMBER);";
+        cmd.CommandText = "CREATE TABLE IF NOT EXISTS TaskTestTable (name VARCHAR,age NUMBER, doubleVal FLOAT);";
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 
@@ -73,6 +73,24 @@ public abstract class TestBase
         cmd.CommandText = "DROP TABLE IF EXISTS TaskTestTable";
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         File.Delete(PrivateKeyFilePath);
+    }
+
+    protected async Task<string> ExecuteReader(string query)
+    {
+        var connStringBuilder = new DbConnectionStringBuilder
+        {
+            ConnectionString = ConnectionString,
+        };
+        connStringBuilder.Add("private_key_file", PrivateKeyFilePath);
+        connStringBuilder.Add("private_key_pwd", PrivateKeyPassphrase);
+        await using var conn = new SnowflakeDbConnection();
+        conn.ConnectionString = connStringBuilder.ConnectionString;
+        await conn.OpenAsync().ConfigureAwait(false);
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = query;
+        var result = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+        return await result.ReadAsync() ? result.GetString(0) : string.Empty;
     }
 
     private static string InitPrivateKeyFile()

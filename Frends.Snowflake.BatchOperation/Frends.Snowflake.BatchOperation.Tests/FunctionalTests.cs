@@ -187,4 +187,35 @@ public class FunctionalTests : TestBase
         Assert.That(result.AffectedRows, Is.EqualTo(0));
         Assert.That(result.Error.Message, Contains.Substring("Transaction failed. Rolled back."), result.Error.Message);
     }
+
+    [Test]
+    public async Task ShouldUseCorrectTypesData()
+    {
+        var input = new Input
+        {
+            Query = "INSERT INTO TaskTestTable (NAME, AGE, DOUBLEVAL) VALUES (:NAME, :AGE, :DOUBLEVAL)",
+            JsonData = """
+                       [
+                            {
+                                "NAME": "Mon",
+                                "AGE": 34.3
+                            },
+                            {
+                                "NAME": "Mat",
+                                "DOUBLEVAL": 11.5
+                            }
+                       ]
+                       """,
+        };
+
+        var result =
+            await Snowflake.BatchOperation(input, DefaultConnection(), DefaultOptions(), CancellationToken.None);
+        var monData = await ExecuteReader("SELECT AGE FROM TaskTestTable WHERE NAME = 'Mon';");
+        var matData = await ExecuteReader("SELECT DOUBLEVAL FROM TaskTestTable WHERE NAME = 'Mat';");
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.AffectedRows, Is.EqualTo(2));
+        Assert.That(monData, Is.EqualTo("34"));
+        Assert.That(matData, Is.EqualTo("11.5"));
+    }
 }

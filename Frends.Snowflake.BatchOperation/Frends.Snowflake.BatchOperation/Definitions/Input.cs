@@ -32,5 +32,5 @@ public class Input
     /// ]
     /// </example>
     [DefaultValue("")]
-    public string JsonData { get; set; }
+    public string JsonData { get; set; } = string.Empty;
 }

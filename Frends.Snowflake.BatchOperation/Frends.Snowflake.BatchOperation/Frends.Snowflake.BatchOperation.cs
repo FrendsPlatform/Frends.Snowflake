@@ -22,7 +22,7 @@ public static class Snowflake
     /// <param name="connection">Connection parameters.</param>
     /// <param name="options">Additional parameters.</param>
     /// <param name="cancellationToken">A cancellation token provided by Frends Platform.</param>
-    /// <returns>object { bool Success, string Output, object Error { string Message, Exception AdditionalInfo } }</returns>
+    /// <returns>object { bool Success, int AffectedRows, object Error { string Message, Exception AdditionalInfo } }</returns>
     public static async Task<Result> BatchOperation(
         [PropertyTab] Input input,
         [PropertyTab] Connection connection,
@@ -50,7 +50,7 @@ public static class Snowflake
                     var param = cmd.CreateParameter();
                     param.ParameterName = row.Key;
                     param.Value = row.Value.ToArray();
-                    param.DbType = SnowflakeHandler.GetDbType(row.Value.First());
+                    param.DbType = SnowflakeHandler.GetDbType(row.Value.FirstOrDefault(x => x != null));
                     cmd.Parameters.Add(param);
                 }
 
@@ -67,8 +67,15 @@ public static class Snowflake
             }
             catch (Exception e)
             {
-                cmd.CommandText = "ROLLBACK";
-                await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    cmd.CommandText = "ROLLBACK";
+                    await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception rollbackEx)
+                {
+                    throw new AggregateException("Transaction failed and rollback also failed.", e, rollbackEx);
+                }
 
                 throw new Exception("Transaction failed. Rolled back.", e);
             }
