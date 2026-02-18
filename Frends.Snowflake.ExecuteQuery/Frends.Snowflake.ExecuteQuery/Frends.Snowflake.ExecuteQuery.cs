@@ -156,9 +156,10 @@ public class Snowflake
 
     private static JToken FloatToJsonToken(object d)
     {
-        if (double.IsNaN((double)d) || double.IsInfinity((double)d))
+        var dbl = Convert.ToDouble(d);
+        if (double.IsNaN(dbl) || double.IsInfinity(dbl))
             return JValue.CreateNull(); // or new JValue(d.ToString()) if you prefer strings
 
-        return new JValue(d);
+        return new JValue(dbl);
     }
 }
