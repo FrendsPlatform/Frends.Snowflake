@@ -3,6 +3,7 @@ Frends Task for Snowflake operations.
 
 # Tasks
 - [Frends.Snowflake.ExecuteQuery](Frends.Snowflake.ExecuteQuery/README.md)
+- [Frends.Snowflake.BatchOperation](Frends.Snowflake.BatchOperation/README.md)
 
 # Contributing
 When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other method with the owners of this repository before making a change.
