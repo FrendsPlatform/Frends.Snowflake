@@ -15,8 +15,8 @@ public class ErrorHandlerTest : TestBase
     {
         var options = DefaultOptions();
         options.ThrowErrorOnFailure = true;
-        var ex = Assert.ThrowsAsync<Exception>(() =>
-            Snowflake.BatchOperation(DefaultInput(), DefaultConnection(), options, CancellationToken.None));
+        var ex = Assert.ThrowsAsync<Exception>((Func<Task>)(() =>
+            Snowflake.BatchOperation(DefaultInput(), DefaultConnection(), options, CancellationToken.None)));
         Assert.That(ex, Is.Not.Null);
     }
 
@@ -37,8 +37,8 @@ public class ErrorHandlerTest : TestBase
         var options = DefaultOptions();
         options.ThrowErrorOnFailure = true;
         options.ErrorMessageOnFailure = CustomErrorMessage;
-        var ex = Assert.ThrowsAsync<Exception>(() =>
-            Snowflake.BatchOperation(DefaultInput(), DefaultConnection(), options, CancellationToken.None));
+        var ex = Assert.ThrowsAsync<Exception>((Func<Task>)(() =>
+            Snowflake.BatchOperation(DefaultInput(), DefaultConnection(), options, CancellationToken.None)));
         Assert.That(ex, Is.Not.Null);
         Assert.That(ex.Message, Contains.Substring(CustomErrorMessage));
     }
