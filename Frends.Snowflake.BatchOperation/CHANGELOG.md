@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-09-29
+
+### Fixed
+
+- Updated the task package copyright metadata.
+
 ## [1.1.0] - 2026-02-23
 
 ### Fixed
