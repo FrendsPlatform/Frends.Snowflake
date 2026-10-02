@@ -70,6 +70,8 @@ public abstract class TestBase
         conn.ConnectionString = connStringBuilder.ConnectionString;
         await conn.OpenAsync().ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "CREATE TABLE IF NOT EXISTS TaskTestTable (name VARCHAR,age NUMBER, doubleVal FLOAT);";
+        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
         cmd.CommandText = "TRUNCATE TABLE TaskTestTable";
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
