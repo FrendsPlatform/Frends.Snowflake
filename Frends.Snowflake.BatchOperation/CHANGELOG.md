@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Updated task package metadata to meet Frends platform requirements.
+- Updated task package metadata to meet current Frends platform requirements.
 
 ## [1.1.0] - 2026-02-23
 
