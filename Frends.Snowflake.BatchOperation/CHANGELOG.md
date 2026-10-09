@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-10-08
+
+### Fixed
+
+- Updated task package metadata to meet current Frends platform requirements.
+
 ## [1.1.0] - 2026-02-23
 
 ### Fixed
