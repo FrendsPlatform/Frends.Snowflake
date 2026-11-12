@@ -1,39 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	<TargetFramework>net8.0</TargetFramework>
-	<Version>3.0.0</Version>
-	<Authors>Frends</Authors>
-	<Copyright>Frends</Copyright>
-	<Company>Frends</Company>
-	<Product>Frends</Product>
-	<PackageTags>Frends</PackageTags>
-	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<Description>Frends Task for executing Snowflake queries.</Description>
-	<PackageProjectUrl>https://frends.com/</PackageProjectUrl>
-	<RepositoryUrl>https://github.com/FrendsPlatform/Frends.Snowflake</RepositoryUrl>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Version>3.0.0</Version>
+        <Authors>Frends</Authors>
+        <Copyright>Frends</Copyright>
+        <Company>Frends</Company>
+        <Product>Frends</Product>
+        <PackageTags>Frends</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Description>Frends Task for executing Snowflake queries.</Description>
+        <PackageProjectUrl>https://frends.com/</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/FrendsPlatform/Frends.Snowflake</RepositoryUrl>
+    </PropertyGroup>
 
-  <ItemGroup>
-	  <None Include="FrendsTaskMetadata.json" Pack="true" PackagePath="/">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Snowflake.Data" Version="4.8.0"/>
+        <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="FrendsTaskAnalyzers" Version="1.*">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Snowflake.Data" Version="4.8.0" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="FrendsTaskAnalyzers" Version="1.*">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="FrendsTaskMetadata.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="../CHANGELOG.md" PackagePath="/" Pack="true"/>
+        <Content Include="FrendsTaskMetadata.json"
+                 Pack="true"
+                 PackagePath="/"
+                 CopyToOutputDirectory="PreserveNewest"/>
+        <AdditionalFiles Include="FrendsTaskMetadata.json"/>
+    </ItemGroup>
 </Project>

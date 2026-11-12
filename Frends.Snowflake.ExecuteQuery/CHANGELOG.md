@@ -6,6 +6,8 @@
 - Upgraded the task and test projects to .NET 8.
 - **[Breaking Change]** Result now rethrows original exception instead of creating a new general one.
 - **[Breaking Change]** `ErrorMessage` property has been removed from the `Result` class. Use `Error.Message` instead.
+- **[Breaking Change]** Moved `ConnectionString`, `PrivateKeyFilePath`, and `PrivateKeyPassphrase` from the Input tab to a new Connection tab.
+- **[Breaking Change]** Removed `ThrowExceptionOnError`; use `ThrowErrorOnFailure` instead.
 
 ## [2.0.0] - 2025-09-03
 ### Changed

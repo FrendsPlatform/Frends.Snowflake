@@ -9,21 +9,24 @@ namespace Frends.Snowflake.ExecuteQuery.Tests;
 public class ComplianceTests
 {
     [TestMethod]
-    public void ExecuteQuery_ReturnsStructuredErrorWhenLegacyOptionDisablesThrowing()
+    public void ExecuteQuery_ReturnsStructuredErrorWhenThrowErrorOnFailureDisablesThrowing()
     {
         var options = new Options
         {
-            ThrowExceptionOnError = false,
+            ThrowErrorOnFailure = false,
             ErrorMessageOnFailure = "Snowflake query execution failed",
         };
         var result = Snowflake.ExecuteQuery(
-            new Input { ConnectionString = string.Empty },
+            new Input(),
+            new Connection { ConnectionString = string.Empty },
             options,
             CancellationToken.None);
 
         Assert.IsFalse(options.ThrowErrorOnFailure);
         Assert.IsFalse(result.Success);
-        Assert.AreEqual("Snowflake query execution failed: Invalid connection string.", result.Error.Message);
+        Assert.AreEqual(
+            "Snowflake query execution failed: Validation failed:\nThe ConnectionString field is required.",
+            result.Error.Message);
         Assert.IsNotNull(result.Error.AdditionalInfo);
     }
 }

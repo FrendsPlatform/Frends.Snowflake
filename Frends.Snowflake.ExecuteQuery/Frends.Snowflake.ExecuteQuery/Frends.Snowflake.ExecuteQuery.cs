@@ -20,26 +20,28 @@ public static class Snowflake
     /// Execute Snowflake query.
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.Snowflake.ExecuteQuery)
     /// </summary>
-    /// <param name="input">Connection and command parameters.</param>
+    /// <param name="input">Command parameters.</param>
+    /// <param name="connection">Connection parameters.</param>
     /// <param name="options">Options for controlling the behavior of a Task.</param>
     /// <param name="cancellationToken">A cancellation token provided by Frends Platform.</param>
     /// <returns>object { bool Success, int RecordsAffected, dynamic ErrorMessage, dynamic Data, object Error { string Message, Exception AdditionalInfo } }</returns>
     public static Result ExecuteQuery(
         [PropertyTab] Input input,
+        [PropertyTab] Connection connection,
         [PropertyTab] Options options,
         CancellationToken cancellationToken)
     {
         try
         {
-            ValidationHandler.Run(input);
+            ValidationHandler.Run(input, connection);
 
             using IDbConnection conn = new SnowflakeDbConnection();
             var csb = new DbConnectionStringBuilder
             {
-                ConnectionString = input.ConnectionString,
+                ConnectionString = connection.ConnectionString,
             };
 
-            if (!string.IsNullOrWhiteSpace(input.PrivateKeyFilePath))
+            if (!string.IsNullOrWhiteSpace(connection.PrivateKeyFilePath))
             {
                 if (csb.ContainsKey("private_key") || csb.ContainsKey("private_key_file"))
                 {
@@ -47,12 +49,12 @@ public static class Snowflake
                         "ConnectionString already contains a private key. Use either ConnectionString OR PrivateKeyFilePath, not both.");
                 }
 
-                if (!File.Exists(input.PrivateKeyFilePath))
-                    throw new FileNotFoundException($"Private key file not found: {input.PrivateKeyFilePath}");
+                if (!File.Exists(connection.PrivateKeyFilePath))
+                    throw new FileNotFoundException($"Private key file not found: {connection.PrivateKeyFilePath}");
 
-                csb["private_key_file"] = input.PrivateKeyFilePath.Replace('\\', '/');
-                if (!string.IsNullOrEmpty(input.PrivateKeyPassphrase))
-                    csb["private_key_pwd"] = input.PrivateKeyPassphrase;
+                csb["private_key_file"] = connection.PrivateKeyFilePath.Replace('\\', '/');
+                if (!string.IsNullOrEmpty(connection.PrivateKeyPassphrase))
+                    csb["private_key_pwd"] = connection.PrivateKeyPassphrase;
             }
 
             conn.ConnectionString = csb.ConnectionString;
