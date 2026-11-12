@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Frends.Snowflake.ExecuteQuery.Definitions;
@@ -16,6 +16,7 @@ public class Input
     /// authenticator=SNOWFLAKE_JWT;private_key_file=C:/snow/rsa_key.p8;private_key_pwd=MyStrongPassphrase
     /// </example>
     [PasswordPropertyText]
+    [Required]
     public string ConnectionString { get; set; }
 
     /// <summary>

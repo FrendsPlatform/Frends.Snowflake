@@ -1,15 +1,14 @@
-namespace Frends.Snowflake.ExecuteQuery.Definitions;
+﻿namespace Frends.Snowflake.ExecuteQuery.Definitions;
 
 /// <summary>
 /// Represents the result of a Task.
 /// </summary>
 public class Result
 {
-    internal Result(bool success, int recordsAffected, dynamic errorMessage, dynamic data, Error error = null)
+    internal Result(bool success, int recordsAffected, dynamic data, Error error = null)
     {
         Success = success;
         RecordsAffected = recordsAffected;
-        ErrorMessage = errorMessage;
         Data = data;
         Error = error;
     }
@@ -18,27 +17,14 @@ public class Result
     /// Gets a value indicating whether the Task was executed successfully.
     /// </summary>
     /// <example>true</example>
-    public bool Success { get; private set; }
+    public bool Success { get; set; }
 
     /// <summary>
     /// Records affected.
     /// Some statements will return -1.
     /// </summary>
     /// <example>100</example>
-    public int RecordsAffected { get; private set; }
-
-    /// <summary>
-    /// Error that occurred during task execution.
-    /// </summary>
-    /// <example>object { string Message, Exception AdditionalInfo }</example>
-    public Error Error { get; private set; }
-
-    /// <summary>
-    /// Error message.
-    /// This value is generated when an exception occurs and Options.ThrowErrorOnFailure = false.
-    /// </summary>
-    /// <example>Table 'NOTABLE' does not exist or not authorized...</example>
-    public dynamic ErrorMessage { get; private set; }
+    public int RecordsAffected { get; set; }
 
     /// <summary>
     /// Procedure's result as JToken.
@@ -49,5 +35,11 @@ public class Result
     /// Input.ExecuteType = NonQuery: null,
     /// Input.ExecuteType = Scalar: {"Value": "Jane"}
     /// </example>
-    public dynamic Data { get; private set; }
+    public dynamic Data { get; set; }
+
+    /// <summary>
+    /// Error that occurred during task execution.
+    /// </summary>
+    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    public Error Error { get; set; }
 }

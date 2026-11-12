@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using dotenv.net;
 using Frends.Snowflake.ExecuteQuery.Definitions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
@@ -12,22 +13,20 @@ using Snowflake.Data.Client;
 namespace Frends.Snowflake.ExecuteQuery.Tests;
 
 // Running tests locally:
-//   1. Set environment variables:
-//        - Snowflake_ConnectionString
-//        - Snowflake_PrivateKeyFilePath (path to your rsa_key.p8)
-//        - Snowflake_PrivateKeyPassphrase (if key is encrypted)
+//   1. Copy .env.example to .env in the test project and fill in the values
+//      (loaded with dotenv.net; real environment variables are used when .env is absent).
 //   2. Run tests as usual (`dotnet test`).
 //
 // Running tests in GitHub Actions:
-//   - Tests will use the SNOWFLAKE_PRIVATE_KEY_B64 secret.
+//   - Tests will use the Snowflake_PrivateKeyB64 secret.
 //   - The key is decoded in InitPrivateKeyFile() and written to a temp file.
-//   - No local file path is needed in the workflow.
 [TestClass]
 public class UnitTests
 {
-    private static readonly string? ConnectionString = Environment.GetEnvironmentVariable("Snowflake_ConnectionString");
+    private static readonly bool EnvLoaded = LoadEnv();
+    private static readonly string? ConnectionString = GetEnv("Snowflake_ConnectionString");
     private static readonly string? PrivateKeyFilePath = InitPrivateKeyFile();
-    private static readonly string? PrivateKeyPassphrase = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyPassphrase");
+    private static readonly string? PrivateKeyPassphrase = GetEnv("Snowflake_PrivateKeyPassphrase");
     private static readonly List<string> Names = new() { "John", "Jane", "Tom", "Alice", "Bob", "Charlie", "David", "Eve", "Mallory", "Oscar" };
     private static readonly Random Random = new();
     private static readonly int Age = Random.Next(1, 101);
@@ -106,7 +105,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.AreEqual(1, result.RecordsAffected);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -117,7 +116,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -128,7 +127,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -148,7 +147,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
+        Assert.IsTrue(result.Error.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
     }
 
     [TestMethod]
@@ -168,7 +167,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
+        Assert.IsTrue(result.Error.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
     }
 
     [TestMethod]
@@ -188,7 +187,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
+        Assert.IsTrue(result.Error.Message.Contains("Table 'NOTABLE' does not exist or not authorized"));
     }
 
     [TestMethod]
@@ -208,7 +207,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
+        Assert.IsTrue(result.Error.Message.Contains("Numeric value 'A' is not recognized"));
     }
 
     [TestMethod]
@@ -228,7 +227,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
+        Assert.IsTrue(result.Error.Message.Contains("Numeric value 'A' is not recognized"));
     }
 
     [TestMethod]
@@ -248,7 +247,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Numeric value 'A' is not recognized"));
+        Assert.IsTrue(result.Error.Message.Contains("Numeric value 'A' is not recognized"));
     }
 
     [TestMethod]
@@ -259,7 +258,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(result.Data.Count > 0);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
         Assert.AreEqual(-1, result.RecordsAffected);
 
         // Check props
@@ -279,7 +278,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
         Assert.AreEqual(0, result.RecordsAffected);
     }
 
@@ -291,7 +290,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsTrue(result.Success);
         Assert.IsTrue(Names.Contains(result.Data.Value.ToString()));
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
         Assert.AreEqual(1, result.RecordsAffected);
     }
 
@@ -312,7 +311,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
+        Assert.IsTrue(result.Error.Message.Contains("is not recognized SqlState: 22018"));
     }
 
     [TestMethod]
@@ -332,7 +331,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
+        Assert.IsTrue(result.Error.Message.Contains("is not recognized SqlState: 22018"));
     }
 
     [TestMethod]
@@ -352,7 +351,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("is not recognized SqlState: 22018"));
+        Assert.IsTrue(result.Error.Message.Contains("is not recognized SqlState: 22018"));
     }
 
     [TestMethod]
@@ -430,7 +429,7 @@ public class UnitTests
         var result = Snowflake.ExecuteQuery(input, options, CancellationToken.None);
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Format of the initialization string does not conform to specification"));
+        Assert.IsTrue(result.Error.Message.Contains("Format of the initialization string does not conform to specification"));
     }
 
     [TestMethod]
@@ -443,7 +442,7 @@ public class UnitTests
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
         Assert.AreEqual("FRENDSFSP", result.Data.Value.ToString().ToUpper());
-        Assert.IsNull(result.ErrorMessage);
+        Assert.IsNull(result.Error);
     }
 
     [TestMethod]
@@ -456,7 +455,7 @@ public class UnitTests
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("Private key file not found"));
+        Assert.IsTrue(result.Error.Message.Contains("Private key file not found"));
     }
 
     [TestMethod]
@@ -469,12 +468,20 @@ public class UnitTests
 
         Assert.IsFalse(result.Success);
         Assert.IsNull(result.Data);
-        Assert.IsTrue(result.ErrorMessage.Message.Contains("problem creating ENCRYPTED private key"));
+        Assert.IsTrue(result.Error.Message.Contains("problem creating ENCRYPTED private key"));
+    }
+
+    private static string? GetEnv(string name) => Environment.GetEnvironmentVariable(name);
+
+    private static bool LoadEnv()
+    {
+        DotEnv.Load(new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 6));
+        return true;
     }
 
     private static string? InitPrivateKeyFile()
     {
-        var privateKeyB64 = Environment.GetEnvironmentVariable("Snowflake_PrivateKeyB64");
+        var privateKeyB64 = GetEnv("Snowflake_PrivateKeyB64");
         if (string.IsNullOrWhiteSpace(privateKeyB64))
             return null;
 

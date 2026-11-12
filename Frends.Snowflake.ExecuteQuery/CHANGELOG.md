@@ -1,9 +1,11 @@
 # Changelog
 
-## [2.1.0] - 2026-11-12
+## [3.0.0] - 2026-11-12
 ### Changed
 - Added structured error details and configurable error handling while retaining the existing error option for compatibility.
 - Upgraded the task and test projects to .NET 8.
+- **[Breaking Change]** Result now rethrows original exception instead of creating a new general one.
+- **[Breaking Change]** `ErrorMessage` property has been removed from the `Result` class. Use `Error.Message` instead.
 
 ## [2.0.0] - 2025-09-03
 ### Changed

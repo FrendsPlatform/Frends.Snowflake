@@ -31,8 +31,7 @@ public static class Snowflake
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(input.ConnectionString))
-                throw new Exception("Invalid connection string.");
+            ValidationHandler.Run(input);
 
             using IDbConnection conn = new SnowflakeDbConnection();
             var csb = new DbConnectionStringBuilder
@@ -67,11 +66,11 @@ public static class Snowflake
                 case CommandTypes.ExecuteNonQuery:
                     var executeNQ = cmd.ExecuteNonQuery();
 
-                    return new Result(true, executeNQ, null, null);
+                    return new Result(true, executeNQ, null);
                 case CommandTypes.ExecuteReader:
                     var reader = cmd.ExecuteReader();
                     var jToken = LoadData(reader, cancellationToken);
-                    var result = new Result(true, reader.RecordsAffected, null, jToken);
+                    var result = new Result(true, reader.RecordsAffected, jToken);
                     if (!reader.IsClosed)
                         reader.Close();
                     reader.Dispose();
@@ -80,7 +79,7 @@ public static class Snowflake
                 case CommandTypes.ExecuteScalar:
                     var executeS = cmd.ExecuteScalar();
 
-                    return new Result(true, 1, null, JToken.FromObject(new
+                    return new Result(true, 1, JToken.FromObject(new
                     {
                         Value = executeS,
                     }));
