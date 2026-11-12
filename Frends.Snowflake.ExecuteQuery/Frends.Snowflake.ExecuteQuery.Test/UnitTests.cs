@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 using System.IO;
 using System.Threading;
@@ -140,7 +141,7 @@ public class UnitTests
     {
         input.CommandText = "insert into NoTable values ('A', 1);";
         input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -160,7 +161,7 @@ public class UnitTests
     {
         input.CommandText = "insert into NoTable values ('A', 1);";
         input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -180,7 +181,7 @@ public class UnitTests
     {
         input.CommandText = "insert into NoTable values ('A', 1);";
         input.CommandType = CommandTypes.ExecuteScalar;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -200,7 +201,7 @@ public class UnitTests
     {
         input.CommandText = "insert into TaskTestTable values (1, 'A');";
         input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -220,7 +221,7 @@ public class UnitTests
     {
         input.CommandText = "insert into TaskTestTable values (1, 'A');";
         input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -240,7 +241,7 @@ public class UnitTests
     {
         input.CommandText = "insert into TaskTestTable values (1, 'A');";
         input.CommandType = CommandTypes.ExecuteScalar;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -304,7 +305,7 @@ public class UnitTests
     {
         input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         input.CommandType = CommandTypes.ExecuteReader;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -324,7 +325,7 @@ public class UnitTests
     {
         input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -344,7 +345,7 @@ public class UnitTests
     {
         input.CommandText = "update TaskTestTable set age = 'B' where name = 10;";
         input.CommandType = CommandTypes.ExecuteNonQuery;
-        Assert.ThrowsException<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<SnowflakeDbException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
@@ -409,21 +410,21 @@ public class UnitTests
     public void ExecuteTest_InvalidConnectionString_IsNULL()
     {
         connection.ConnectionString = null;
-        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<ValidationException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
     public void ExecuteTest_InvalidConnectionString_Empty()
     {
         connection.ConnectionString = string.Empty;
-        Assert.ThrowsException<Exception>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<ValidationException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
     public void ExecuteTest_InvalidConnectionString_Foo_ThrowErrorOnFailure_True()
     {
         connection.ConnectionString = "foo";
-        Assert.ThrowsException<ArgumentException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
+        Assert.ThrowsExactly<ArgumentException>(() => Snowflake.ExecuteQuery(input, connection, options, CancellationToken.None));
     }
 
     [TestMethod]
