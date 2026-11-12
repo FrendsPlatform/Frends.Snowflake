@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Frends.Snowflake.ExecuteQuery.Definitions;
@@ -24,6 +24,7 @@ public class Input
     /// ExecuteReader: Executes the query, and returns an object that can iterate over the entire result set.
     /// ExecuteScalar: Executes the query, and returns the first column of the first row in the result set returned by the query. Additional columns or rows are ignored.
     /// </summary>
+    /// <example>ExecuteReader</example>
     public CommandTypes CommandType { get; set; }
 
     /// <summary>

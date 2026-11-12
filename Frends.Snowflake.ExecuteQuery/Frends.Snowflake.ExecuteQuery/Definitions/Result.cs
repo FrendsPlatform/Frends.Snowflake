@@ -1,10 +1,19 @@
-﻿namespace Frends.Snowflake.ExecuteQuery.Definitions;
+namespace Frends.Snowflake.ExecuteQuery.Definitions;
 
 /// <summary>
 /// Represents the result of a Task.
 /// </summary>
 public class Result
 {
+    internal Result(bool success, int recordsAffected, dynamic errorMessage, dynamic data, Error error = null)
+    {
+        Success = success;
+        RecordsAffected = recordsAffected;
+        ErrorMessage = errorMessage;
+        Data = data;
+        Error = error;
+    }
+
     /// <summary>
     /// Gets a value indicating whether the Task was executed successfully.
     /// </summary>
@@ -17,6 +26,12 @@ public class Result
     /// </summary>
     /// <example>100</example>
     public int RecordsAffected { get; private set; }
+
+    /// <summary>
+    /// Error that occurred during task execution.
+    /// </summary>
+    /// <example>object { string Message, Exception AdditionalInfo }</example>
+    public Error Error { get; private set; }
 
     /// <summary>
     /// Error message.
@@ -35,12 +50,4 @@ public class Result
     /// Input.ExecuteType = Scalar: {"Value": "Jane"}
     /// </example>
     public dynamic Data { get; private set; }
-
-    internal Result(bool success, int recordsAffected, dynamic errorMessage, dynamic data)
-    {
-        Success = success;
-        RecordsAffected = recordsAffected;
-        ErrorMessage = errorMessage;
-        Data = data;
-    }
 }
