@@ -1,57 +1,60 @@
-﻿using Frends.Snowflake.ExecuteQuery.Definitions;
-using Newtonsoft.Json.Linq;
-using Snowflake.Data.Client;
 using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using Frends.Snowflake.ExecuteQuery.Definitions;
+using Frends.Snowflake.ExecuteQuery.Helpers;
+using Newtonsoft.Json.Linq;
+using Snowflake.Data.Client;
 
 namespace Frends.Snowflake.ExecuteQuery;
 
 /// <summary>
 /// Snowflake Task.
 /// </summary>
-public class Snowflake
+public static class Snowflake
 {
     /// <summary>
     /// Execute Snowflake query.
     /// [Documentation](https://tasks.frends.com/tasks/frends-tasks/Frends.Snowflake.ExecuteQuery)
     /// </summary>
-    /// <param name="input">Connection and command parameters.</param>
+    /// <param name="input">Command parameters.</param>
+    /// <param name="connection">Connection parameters.</param>
     /// <param name="options">Options for controlling the behavior of a Task.</param>
-    /// <returns>Object { bool Success, int RecordsAffected, dynamic ErrorMessage, dynamic Data }</returns>
-    public static Result ExecuteQuery([PropertyTab] Input input, [PropertyTab] Options options,
+    /// <param name="cancellationToken">A cancellation token provided by Frends Platform.</param>
+    /// <returns>object { bool Success, int RecordsAffected, dynamic ErrorMessage, dynamic Data, object Error { string Message, Exception AdditionalInfo } }</returns>
+    public static Result ExecuteQuery(
+        [PropertyTab] Input input,
+        [PropertyTab] Connection connection,
+        [PropertyTab] Options options,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(input.ConnectionString))
-            throw new Exception("Invalid connection string.");
-
         try
         {
+            ValidationHandler.Run(input, connection);
+
             using IDbConnection conn = new SnowflakeDbConnection();
             var csb = new DbConnectionStringBuilder
             {
-                ConnectionString = input.ConnectionString
+                ConnectionString = connection.ConnectionString,
             };
 
-            if (!string.IsNullOrWhiteSpace(input.PrivateKeyFilePath))
+            if (!string.IsNullOrWhiteSpace(connection.PrivateKeyFilePath))
             {
-                var csLower = csb.ConnectionString.ToLowerInvariant();
-
                 if (csb.ContainsKey("private_key") || csb.ContainsKey("private_key_file"))
+                {
                     throw new Exception(
                         "ConnectionString already contains a private key. Use either ConnectionString OR PrivateKeyFilePath, not both.");
-                if (!File.Exists(input.PrivateKeyFilePath))
-                    throw new FileNotFoundException($"Private key file not found: {input.PrivateKeyFilePath}");
+                }
 
-                csb["private_key_file"] = input.PrivateKeyFilePath.Replace('\\', '/');
-                if (!string.IsNullOrEmpty(input.PrivateKeyPassphrase))
-                    csb["private_key_pwd"] = input.PrivateKeyPassphrase;
+                if (!File.Exists(connection.PrivateKeyFilePath))
+                    throw new FileNotFoundException($"Private key file not found: {connection.PrivateKeyFilePath}");
+
+                csb["private_key_file"] = connection.PrivateKeyFilePath.Replace('\\', '/');
+                if (!string.IsNullOrEmpty(connection.PrivateKeyPassphrase))
+                    csb["private_key_pwd"] = connection.PrivateKeyPassphrase;
             }
 
             conn.ConnectionString = csb.ConnectionString;
@@ -65,11 +68,11 @@ public class Snowflake
                 case CommandTypes.ExecuteNonQuery:
                     var executeNQ = cmd.ExecuteNonQuery();
 
-                    return new Result(true, executeNQ, null, null);
+                    return new Result(true, executeNQ, null);
                 case CommandTypes.ExecuteReader:
                     var reader = cmd.ExecuteReader();
                     var jToken = LoadData(reader, cancellationToken);
-                    var result = new Result(true, reader.RecordsAffected, null, jToken);
+                    var result = new Result(true, reader.RecordsAffected, jToken);
                     if (!reader.IsClosed)
                         reader.Close();
                     reader.Dispose();
@@ -78,23 +81,17 @@ public class Snowflake
                 case CommandTypes.ExecuteScalar:
                     var executeS = cmd.ExecuteScalar();
 
-                    return new Result(true, 1, null, JToken.FromObject(new
+                    return new Result(true, 1, JToken.FromObject(new
                     {
-                        Value = executeS
+                        Value = executeS,
                     }));
             }
 
-            if (options.ThrowExceptionOnError)
-                throw new Exception("Invalid Command type.");
-
-            return new Result(false, 0, "Invalid Command type", null);
+            throw new Exception("Invalid Command type.");
         }
         catch (Exception ex)
         {
-            if (options.ThrowExceptionOnError)
-                throw;
-
-            return new Result(false, 0, ex, null);
+            return ex.Handle(options);
         }
     }
 
